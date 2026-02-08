@@ -1,0 +1,9 @@
+crop/*
+final_font/*
+svg_separate/*
+pico/*
+
+node_modules
+package.json
+package-lock.json
+
