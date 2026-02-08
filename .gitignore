@@ -1,7 +1,10 @@
 crop/*
+crop_*/
 final_font/*
 svg_separate/*
 pico/*
+output*/
+pico_*/
 
 node_modules
 package.json
