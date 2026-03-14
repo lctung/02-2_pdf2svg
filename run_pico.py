@@ -3,8 +3,9 @@ import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-input_folder = "./output5"
-output_folder = "./pico_5"
+input_folder = "./output"
+output_folder = "./pico"
+
 concurrency = 20
 
 def process_single_file(filename):

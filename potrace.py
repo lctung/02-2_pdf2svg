@@ -7,7 +7,7 @@ from PIL import Image, ImageFilter
 
 
 input_dir = Path("./crop")
-output_dir = Path("./output5")
+output_dir = Path("./output")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 png_files = list(input_dir.glob("*.png"))
