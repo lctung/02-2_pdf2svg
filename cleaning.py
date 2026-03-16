@@ -8,7 +8,7 @@ def collect_glyphs_for_review(base_dir="crop", review_dir="to_be_reviewed", ext=
     rev_path.mkdir(parents=True, exist_ok=True)
 
     # defaultdict: 當存取不存在的key，會自動建立預設值
-    # 記錄所有crop底下的字的來源路徑的字典，value data type --> list
+    # 記錄所有crop底下的字的來源路徑的字典，value: data type --> list
     glyph_map = defaultdict(list)
     
     # 掃描開頭為 crop_ 的資料夾
