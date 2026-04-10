@@ -1,3 +1,5 @@
+# 感謝資工四張睿恩提供此程式
+
 import os
 import sys
 from pathlib import Path
