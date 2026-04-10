@@ -18,7 +18,7 @@ def convert_with_timeout(svg_file, png_dir, output_size=300, timeout_seconds=60)
     # Try cairosvg first
     try:
         result = subprocess.run(
-            ["cairosvg", str(svg_file), "-o", str(png_path), "-W", str(output_size), "-H", str(output_size)],
+            ["cairosvg", str(svg_file), "-o", str(png_path), "-W", str(output_size), "-H", str(output_size), "-b", "white"],
             timeout=timeout_seconds,
             capture_output=True,
             text=True
@@ -38,24 +38,52 @@ def convert_with_timeout(svg_file, png_dir, output_size=300, timeout_seconds=60)
         return _try_inkscape(svg_file, png_path, output_size, timeout_seconds)
 
 def _try_inkscape(svg_file, png_path, output_size, timeout_seconds):
-    """Fallback to inkscape if cairosvg fails or times out"""
-    try:
-        result = subprocess.run(
-            ["inkscape", str(svg_file), "--export-type=png", f"--export-filename={png_path}", f"--export-width={output_size}", f"--export-height={output_size}"],
-            timeout=timeout_seconds,
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode == 0:
-            return (True, Path(svg_file).name, "Success (inkscape fallback)")
-        else:
+    """加上環境變數與重試機制，徹底解決 D-Bus 錯誤並確保白底"""
+    import os
+    import time
+    
+    # 禁用 D-Bus，因為會報錯 (error code: DBus::Error)
+    custom_env = os.environ.copy()
+    custom_env["DBUS_SESSION_BUS_ADDRESS"] = "" 
+    
+    max_retries = 3  # 最多重試 3 次
+    for attempt in range(max_retries):
+        try:
+            result = subprocess.run(
+                [
+                    "inkscape", 
+                    str(svg_file), 
+                    "--export-type=png", 
+                    f"--export-filename={png_path}", 
+                    f"--export-width={output_size}", 
+                    f"--export-height={output_size}",
+                    "--export-background=white",
+                    "--export-background-opacity=255"
+                ],
+                timeout=timeout_seconds,
+                capture_output=True,
+                text=True,
+                env=custom_env
+            )
+            
+            if result.returncode == 0:
+                return (True, Path(svg_file).name, "Success (inkscape)")
+            
+            # 如果有錯誤可以重試
+            if "DBus" in result.stderr or "Gio" in result.stderr:
+                time.sleep(1)
+                continue
+                
             return (False, Path(svg_file).name, f"Error: {result.stderr[:100]}")
             
-    except subprocess.TimeoutExpired:
-        return (False, Path(svg_file).name, f"Timeout after {timeout_seconds}s")
-    except Exception as e:
-        return (False, Path(svg_file).name, f"Error: {str(e)[:100]}")
+        except subprocess.TimeoutExpired:
+            if attempt == max_retries - 1:
+                return (False, Path(svg_file).name, f"Timeout after {timeout_seconds}s")
+            time.sleep(1)
+        except Exception as e:
+            return (False, Path(svg_file).name, f"Error: {str(e)[:100]}")
+            
+    return (False, Path(svg_file).name, "Failed after multiple retries due to DBus/System error")
 
 def main():
     # Paths
@@ -81,7 +109,7 @@ def main():
     error_count = 0
     
     # Parallel processing using ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         # Submit all conversion tasks
         futures = {
             executor.submit(convert_with_timeout, svg_file, png_dir, timeout_seconds=60): svg_file
