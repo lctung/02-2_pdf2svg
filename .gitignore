@@ -8,6 +8,7 @@ pico_*/
 to_be_reviewed/
 png/
 svg/
+
 node_modules
 package.json
 package-lock.json
