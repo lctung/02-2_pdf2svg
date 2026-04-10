@@ -6,7 +6,7 @@ from tqdm import tqdm
 from PIL import Image, ImageFilter
 
 
-input_dir = Path("./final_dataset")
+input_dir = Path("./png")
 output_dir = Path("./output")
 output_dir.mkdir(parents=True, exist_ok=True)
 
